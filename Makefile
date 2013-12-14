@@ -31,6 +31,9 @@ I_FLAGS = $(patsubst %,-I%,$(INCDIRS))
 # Generate dependency information
 C_FLAGS += -Wp,-MD,$(@:%.rel=%.d),-MT,$@,-MP
 
+# Use a modern C standard.
+C_FLAGS += --std-c99 -DSDCC
+
 # Disable warning 110: conditional flow changed by optimizer
 WARNING := --disable-warning 110
 C_FLAGS += $(WARNINGS)
