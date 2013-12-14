@@ -112,6 +112,7 @@ void usbToRadioService()
 // Called by printf.
 void putchar(char c)
 {
+    while (!usbComTxAvailable()) usbComService();
     usbComTxSendByte(c);
 }
 
@@ -122,6 +123,8 @@ void main()
 {
     uint8_t flash_manufacturer;
     uint16_t flash_device;
+    uint16_t timeOfLastMsg = 0;
+
 
     systemInit();
     spi0MasterInit();
@@ -144,19 +147,39 @@ void main()
     radioComRxEnforceOrdering = 1;
     radioComInit();
 
+    //delayMs(5000);
+//
     flash_info(&flash_manufacturer, &flash_device);
     flash_info(&flash_manufacturer, &flash_device);
-
     if (flash_manufacturer == FLASH_MFG && flash_device == FLASH_ID) {
         printf("Flash good.\n");
+    } else {
+        printf("Flash what?\n");
     }
     printf("%x, %hx\n", flash_manufacturer, flash_device);
 
+
     while(1)
     {
+        uint16 now;
         boardService();
         radioComTxService();
         usbComService();
+
+        usbShowStatusWithGreenLed();
+
+        now = (uint16)getMs();
+        if ((now & 0x3FF) <= 20) {
+            setDigitalOutput(PIN_PWR, 1);
+        } else {
+            setDigitalOutput(PIN_PWR, 0);
+        }
+        if (now - timeOfLastMsg > 1000) {
+            printf("-\n");
+            timeOfLastMsg = now;
+
+        }
+
         //usbToRadioService();
         //while (spi0MasterBusy());
         //spi0MasterTransfer(spiTxBuffer, spiRxBuffer, 2);
