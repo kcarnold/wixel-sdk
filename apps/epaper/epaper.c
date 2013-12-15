@@ -125,12 +125,32 @@ void cmdFlashRead() {
     putchar('\n');
 }
 
+
+void cmdPWMOn() {
+    T3CTL   = 0b00000110; // no prescalar (000), don't start (0), no interrupt (0), clear (1), modulo mode (10)
+    T3CCTL0 = 0b00010100; // unused (0), no interrupt (0), toggle on compare (010), enable (1), reserved (00)
+    T3CC0 = 100; // frequency divisor: 24 MHz / 100 = 240 kHz.
+    // Timer 3 use location Alternative 1 (P1_3 and P1_4).
+    PERCFG &= ~(1<<5);  // PERCFG.T3CFG = 0;
+    P1SEL |= (1<<3); // P1_3 is a peripheral (i.e., Timer 3 channel 0).
+
+    // Start the timer.
+    T3CTL |= (1<<4);
+}
+
+void cmdPWMOff() {
+    // Stop the timer.
+    T3CTL &= ~(1<<4);
+}
+
 void remoteControlService() {
     if (!radioComRxAvailable()) return;
 
     switch(radioComRxReceiveByte()) {
     case 'f': cmdFlashInfo(); break;
     case 'r': cmdFlashRead(); break;
+    case '1': cmdPWMOn(); break;
+    case '0': cmdPWMOff(); break;
     default: printf("? ");
     }
 }
