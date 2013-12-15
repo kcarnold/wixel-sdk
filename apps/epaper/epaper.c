@@ -141,6 +141,10 @@ void cmdPWMOn() {
 void cmdPWMOff() {
     // Stop the timer.
     T3CTL &= ~(1<<4);
+
+    // Drive P1_3 low.
+    P1SEL &= ~(1<<3);
+    P1 &= ~(1<<3);
 }
 
 void remoteControlService() {
