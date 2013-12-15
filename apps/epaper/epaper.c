@@ -12,6 +12,7 @@
 #include "common.h"
 #include "flash.h"
 
+#undef LED_YELLOW
 #define LED_YELLOW(x) do { setDigitalOutput(PIN_PWR, x); } while(0)
 
 void updateLeds()
