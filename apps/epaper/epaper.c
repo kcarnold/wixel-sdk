@@ -86,11 +86,22 @@ void cmdFlashInfo() {
     printf("%x, %hx\n", flash_manufacturer, flash_device);
 }
 
+void cmdFlashTestRead() {
+    uint8_t i;
+    uint8_t XDATA buffer[16];
+    flash_read(buffer, 0, 16);
+    for (i=0; i<16; i++) {
+        printf("%x", buffer[i]);
+    }
+    putchar('\n');
+}
+
 void remoteControlService() {
     if (!radioComRxAvailable()) return;
 
     switch(radioComRxReceiveByte()) {
     case 'f': cmdFlashInfo(); break;
+    case 'r': cmdFlashTestRead(); break;
     default: printf("? ");
     }
 }

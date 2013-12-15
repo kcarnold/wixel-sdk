@@ -66,3 +66,18 @@ void flash_info(uint8_t *maufacturer, uint16_t *device) {
     *device = (id_high << 8) | id_low;
     flash_spi_teardown();
 }
+
+void flash_read(uint8_t XDATA *buffer, uint32_t address, uint16_t length) {
+    flash_spi_setup();
+    setDigitalOutput(PIN_SSEL, LOW);
+    delayMicroseconds(10);
+    spi0MasterSendByte(FLASH_FAST_READ);
+    spi0MasterSendByte(address >> 16);
+    spi0MasterSendByte(address >> 8);
+    spi0MasterSendByte(address);
+    spi0MasterSendByte(FLASH_NOP); // read dummy byte
+    for (; length != 0; --length) {
+        *buffer++ = spi0MasterSendByte(FLASH_NOP);
+    }
+    flash_spi_teardown();
+}
