@@ -86,12 +86,40 @@ void cmdFlashInfo() {
     printf("%x, %hx\n", flash_manufacturer, flash_device);
 }
 
-void cmdFlashTestRead() {
+uint8_t read_nibble_hex() {
+    uint8_t c = getchar();
+    if ('0' <= c && c <= '9')
+        return c - '0';
+    if ('a' <= c && c <= 'f')
+        return c - 'a';
+    if ('A' <= c && c <= 'F')
+        return c - 'A';
+    return 0;
+}
+
+uint8_t read_byte_hex() {
+    uint8_t result = read_nibble_hex() << 4;
+    result |= read_nibble_hex();
+    return result;
+}
+
+uint32_t read_uint32_hex_msb() {
+    uint32_t result = 0;
+    result = read_byte_hex();
+    result <<= 8; result |= read_byte_hex();
+    result <<= 8; result |= read_byte_hex();
+    result <<= 8; result |= read_byte_hex();
+    return result;
+}
+
+void cmdFlashRead() {
     uint8_t i;
+    uint32_t address = read_uint32_hex_msb();
     uint8_t XDATA buffer[16];
-    flash_read(buffer, 0, 16);
+    printf("%lx\n", address);
+    flash_read(buffer, address, 16);
     for (i=0; i<16; i++) {
-        printf("%x", buffer[i]);
+        printf("%02x", buffer[i]);
     }
     putchar('\n');
 }
@@ -101,7 +129,7 @@ void remoteControlService() {
 
     switch(radioComRxReceiveByte()) {
     case 'f': cmdFlashInfo(); break;
-    case 'r': cmdFlashTestRead(); break;
+    case 'r': cmdFlashRead(); break;
     default: printf("? ");
     }
 }
@@ -116,6 +144,7 @@ void putchar(char c)
 
 // Called by scanf.
 char getchar() {
+    while (!radioComRxAvailable()) radioComTxService();
     return radioComRxReceiveByte();
 }
 
