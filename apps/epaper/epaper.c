@@ -108,9 +108,6 @@ char getchar() {
     return radioComRxReceiveByte();
 }
 
-uint8 XDATA spiTxBuffer[10];
-uint8 XDATA spiRxBuffer[10];
-
 void main()
 {
     systemInit();
