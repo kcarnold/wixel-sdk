@@ -11,6 +11,7 @@
 
 #include "common.h"
 #include "flash.h"
+#include "epd.h"
 
 #undef LED_YELLOW
 #define LED_YELLOW(x) do { setDigitalOutput(PIN_PWR, x); } while(0)
@@ -125,36 +126,23 @@ void cmdFlashRead() {
     putchar('\n');
 }
 
-
-void cmdPWMOn() {
-    T3CTL   = 0b00000110; // no prescalar (000), don't start (0), no interrupt (0), clear (1), modulo mode (10)
-    T3CCTL0 = 0b00010100; // unused (0), no interrupt (0), toggle on compare (010), enable (1), reserved (00)
-    T3CC0 = 100; // frequency divisor: 24 MHz / 100 = 240 kHz.
-    // Timer 3 use location Alternative 1 (P1_3 and P1_4).
-    PERCFG &= ~(1<<5);  // PERCFG.T3CFG = 0;
-    P1SEL |= (1<<3); // P1_3 is a peripheral (i.e., Timer 3 channel 0).
-
-    // Start the timer.
-    T3CTL |= (1<<4);
+void cmdWhite() {
+    epd_begin();
+    epd_clear();
+    epd_end();
 }
 
-void cmdPWMOff() {
-    // Stop the timer.
-    T3CTL &= ~(1<<4);
-
-    // Drive P1_3 low.
-    P1SEL &= ~(1<<3);
-    P1 &= ~(1<<3);
-}
+#define anyRxAvailable() (radioComRxAvailable() || usbComRxAvailable())
+#define getReceivedByte() (radioComRxAvailable() ? radioComRxReceiveByte() : usbComRxReceiveByte())
+#define comServices() do { radioComTxService(); usbComService(); } while (0)
 
 void remoteControlService() {
-    if (!radioComRxAvailable()) return;
+    if (!anyRxAvailable()) return;
 
-    switch(radioComRxReceiveByte()) {
+    switch(getReceivedByte()) {
     case 'f': cmdFlashInfo(); break;
     case 'r': cmdFlashRead(); break;
-    case '1': cmdPWMOn(); break;
-    case '0': cmdPWMOff(); break;
+    case 'w': cmdWhite(); break;
     default: printf("? ");
     }
 }
@@ -169,9 +157,14 @@ void putchar(char c)
 
 // Called by scanf.
 char getchar() {
-    while (!radioComRxAvailable()) radioComTxService();
-    return radioComRxReceiveByte();
+    while (!anyRxAvailable()) comServices();
+    return getReceivedByte();
 }
+
+//void epd_flash_read()
+//__reentrant
+//
+//typedef void EPD_reader(uint8_t *buffer, uint32_t address, uint16_t length) __reentrant;
 
 void main()
 {
