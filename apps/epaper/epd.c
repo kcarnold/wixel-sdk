@@ -365,10 +365,10 @@ static void SPI_put(uint8_t c) {
 
 static void SPI_put_wait(uint8_t c) {
 
-    SPI_put(c);
-
     // wait for COG ready
     while (isPinHigh(PIN_BUSY));
+
+    SPI_put(c);
 }
 
 
