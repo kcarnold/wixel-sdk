@@ -69,13 +69,6 @@ void updateLeds()
 }
 
 
-void goToSleep() {
-    // Placeholder.
-
-    // Leave MOSI low.
-    spi0MasterSendByte(0);
-}
-
 void cmdFlashInfo() {
     uint8_t flash_manufacturer;
     uint16_t flash_device;
