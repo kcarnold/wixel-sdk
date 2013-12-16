@@ -1,4 +1,5 @@
 #include <wixel.h>
+#include <sleep.h>
 
 #include <usb.h>
 #include <usb_com.h>
@@ -160,6 +161,7 @@ void remoteControlService() {
     case 'w': cmdWhite(); break;
     case 'i': cmdImage(0); break;
     case 'r': cmdImage(1); break;
+    case 's': sleepMode2(5); break;
     default: printf("? ");
     }
 }
@@ -181,6 +183,7 @@ char getchar() {
 void main()
 {
     systemInit();
+    sleepInit();
     spi0MasterInit();
     spi0MasterSetFrequency(3000000);
     spi0MasterSetClockPhase(SPI_PHASE_EDGE_LEADING);
