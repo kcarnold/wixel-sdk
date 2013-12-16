@@ -132,6 +132,21 @@ void cmdWhite() {
     epd_end();
 }
 
+void epd_flash_read(uint8_t XDATA *buffer, uint32_t address, uint16_t length) __reentrant {
+    setDigitalOutput(PIN_PWR, 0); // switch SSEL mux to flash (yes this removes power from the EPD... I hope that's ok.)
+    flash_read(buffer, address, length);
+    setDigitalOutput(PIN_PWR, 1);
+}
+
+void cmdImage() {
+    uint32_t address = read_byte_hex();
+    address <<= 12;
+    epd_begin();
+    epd_frame_cb(address, epd_flash_read, EPD_inverse, 0, 0);
+    epd_frame_cb(address, epd_flash_read, EPD_normal, 0, 0);
+    epd_end();
+}
+
 #define anyRxAvailable() (radioComRxAvailable() || usbComRxAvailable())
 #define getReceivedByte() (radioComRxAvailable() ? radioComRxReceiveByte() : usbComRxReceiveByte())
 #define comServices() do { radioComTxService(); usbComService(); } while (0)
@@ -143,6 +158,7 @@ void remoteControlService() {
     case 'f': cmdFlashInfo(); break;
     case 'r': cmdFlashRead(); break;
     case 'w': cmdWhite(); break;
+    case 'i': cmdImage(); break;
     default: printf("? ");
     }
 }
@@ -160,11 +176,6 @@ char getchar() {
     while (!anyRxAvailable()) comServices();
     return getReceivedByte();
 }
-
-//void epd_flash_read()
-//__reentrant
-//
-//typedef void EPD_reader(uint8_t *buffer, uint32_t address, uint16_t length) __reentrant;
 
 void main()
 {
