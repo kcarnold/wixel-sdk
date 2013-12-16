@@ -47,6 +47,8 @@ void flash_spi_setup() {
     setDigitalOutput(PIN_SSEL, HIGH);
     spi0MasterSendByte(FLASH_NOP);
     delayMicroseconds(50);
+    setDigitalOutput(PIN_SSEL, LOW);
+    delayMicroseconds(10);
 }
 
 void flash_spi_teardown() {
@@ -57,8 +59,6 @@ void flash_spi_teardown() {
 void flash_info(uint8_t *maufacturer, uint16_t *device) {
     uint8_t id_high, id_low;
     flash_spi_setup();
-    setDigitalOutput(PIN_SSEL, LOW);
-    delayMicroseconds(10);
     spi0MasterSendByte(FLASH_RDID);
     *maufacturer = spi0MasterReceiveByte();
     id_high = spi0MasterReceiveByte();
@@ -69,8 +69,6 @@ void flash_info(uint8_t *maufacturer, uint16_t *device) {
 
 void flash_read(uint8_t XDATA *buffer, uint32_t address, uint16_t length) {
     flash_spi_setup();
-    setDigitalOutput(PIN_SSEL, LOW);
-    delayMicroseconds(10);
     spi0MasterSendByte(FLASH_FAST_READ);
     spi0MasterSendByte(address >> 16);
     spi0MasterSendByte(address >> 8);
@@ -79,5 +77,60 @@ void flash_read(uint8_t XDATA *buffer, uint32_t address, uint16_t length) {
     for (; length != 0; --length) {
         *buffer++ = spi0MasterSendByte(FLASH_NOP);
     }
+    flash_spi_teardown();
+}
+
+uint8_t flash_is_busy() {
+    uint8_t busy;
+    flash_spi_setup();
+    spi0MasterSendByte(FLASH_RDSR);
+    busy = 0 != (FLASH_WIP & spi0MasterSendByte(0xff));
+    flash_spi_teardown();
+    return busy;
+}
+
+
+void flash_write_enable() {
+    while (flash_is_busy());
+    flash_spi_setup();
+    spi0MasterSendByte(FLASH_WREN);
+    flash_spi_teardown();
+}
+
+
+
+void flash_write_disable(void) {
+    while (flash_is_busy());
+    flash_spi_setup();
+    spi0MasterSendByte(FLASH_WRDI);
+    flash_spi_teardown();
+}
+
+
+void flash_write(uint32_t address, const uint8_t XDATA *buffer, uint16_t length) {
+    while (flash_is_busy());
+
+    flash_spi_setup();
+    spi0MasterSendByte(FLASH_PP);
+    spi0MasterSendByte(address >> 16);
+    spi0MasterSendByte(address >> 8);
+    spi0MasterSendByte(address);
+
+    while(length--) {
+        spi0MasterSendByte(*buffer++);
+    }
+
+    flash_spi_teardown();
+}
+
+
+void flash_sector_erase(uint32_t address) {
+    while (flash_is_busy());
+
+    flash_spi_setup();
+    spi0MasterSendByte(FLASH_SE);
+    spi0MasterSendByte(address >> 16);
+    spi0MasterSendByte(address >> 8);
+    spi0MasterSendByte(address);
     flash_spi_teardown();
 }

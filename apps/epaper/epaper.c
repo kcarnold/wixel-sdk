@@ -148,6 +148,13 @@ void cmdImage(uint8_t compensate) {
     epd_end();
 }
 
+void cmdFlashErase() {
+    uint32_t sector = read_byte_hex();
+    flash_write_enable();
+    flash_sector_erase(sector << 12);
+    flash_write_disable();
+}
+
 #define anyRxAvailable() (radioComRxAvailable() || usbComRxAvailable())
 #define getReceivedByte() (radioComRxAvailable() ? radioComRxReceiveByte() : usbComRxReceiveByte())
 #define comServices() do { radioComTxService(); usbComService(); } while (0)
@@ -158,6 +165,7 @@ void remoteControlService() {
     switch(getReceivedByte()) {
     case 'f': cmdFlashInfo(); break;
     case 'd': cmdFlashRead(); break;
+    case 'e': cmdFlashErase(); break;
     case 'w': cmdWhite(); break;
     case 'i': cmdImage(0); break;
     case 'r': cmdImage(1); break;
