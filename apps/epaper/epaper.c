@@ -33,9 +33,9 @@ uint8_t read_nibble_hex() {
     if ('0' <= c && c <= '9')
         return c - '0';
     if ('a' <= c && c <= 'f')
-        return c - 'a';
+        return c - 'a' + 10;
     if ('A' <= c && c <= 'F')
-        return c - 'A';
+        return c - 'A' + 10;
     return 0;
 }
 
