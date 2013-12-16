@@ -2,9 +2,7 @@
 #include "common.h"
 #include "spi0_master.h"
 
-// inline arrays
-#define CU8_2(a, b) ({a, b})
-#define CU8_3(a, b, c) ( {a, b, c})
+#include "epd.h"
 
 typedef void EPD_reader(uint8_t *buffer, uint32_t address, uint16_t length) __reentrant;
 
@@ -46,6 +44,13 @@ static void epd_spi_command_long(uint8_t reg, uint8_t* data, uint8_t size);
 
 static void epd_frame_fixed(uint8_t fixed_value, EPD_stage stage, uint16_t first_line_no, uint8_t line_count);
 static void epd_line(uint16_t line, const uint8_t *data, uint8_t fixed_value, EPD_stage stage);
+
+void epd_clear() {
+    epd_frame_fixed(0xff, EPD_compensate, 0, 0);
+    epd_frame_fixed(0xff, EPD_white, 0, 0);
+    epd_frame_fixed(0xaa, EPD_inverse, 0, 0);
+    epd_frame_fixed(0xaa, EPD_normal, 0, 0);
+}
 
 void epd_begin() {
     // power up sequence
