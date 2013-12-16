@@ -54,6 +54,7 @@ void flash_spi_setup() {
 void flash_spi_teardown() {
     delayMicroseconds(50);
     setDigitalOutput(PIN_SSEL, HIGH);
+    spi0MasterSendByte(0);
 }
 
 void flash_info(uint8_t *maufacturer, uint16_t *device) {
