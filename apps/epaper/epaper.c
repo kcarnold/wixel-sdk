@@ -138,12 +138,12 @@ void epd_flash_read(uint8_t XDATA *buffer, uint32_t address, uint16_t length) __
     setDigitalOutput(PIN_PWR, 1);
 }
 
-void cmdImage() {
+void cmdImage(uint8_t compensate) {
     uint32_t address = read_byte_hex();
     address <<= 12;
     epd_begin();
-    epd_frame_cb(address, epd_flash_read, EPD_inverse, 0, 0);
-    epd_frame_cb(address, epd_flash_read, EPD_normal, 0, 0);
+    epd_frame_cb(address, epd_flash_read, compensate ? EPD_compensate : EPD_inverse, 0, 0);
+    epd_frame_cb(address, epd_flash_read, compensate ? EPD_white : EPD_normal, 0, 0);
     epd_end();
 }
 
@@ -156,9 +156,10 @@ void remoteControlService() {
 
     switch(getReceivedByte()) {
     case 'f': cmdFlashInfo(); break;
-    case 'r': cmdFlashRead(); break;
+    case 'd': cmdFlashRead(); break;
     case 'w': cmdWhite(); break;
-    case 'i': cmdImage(); break;
+    case 'i': cmdImage(0); break;
+    case 'r': cmdImage(1); break;
     default: printf("? ");
     }
 }
