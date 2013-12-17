@@ -109,29 +109,26 @@ void cmdUpload() {
     uint16_t bytes = 264L * 176 / 8;
     uint8_t XDATA buffer[8];
     address <<= 12;
-    printf("erasing.\n");
     flash_write_enable();
     flash_sector_erase(address);
     delayMs(1);
     flash_sector_erase(address + 1);
-    //delayMs(1);
-    printf("receiving and writing %hd bytes\n", bytes);
+    putchar('>'); // Go!
     while (bytes) {
         uint8_t bufSize = 0;
         while (bufSize < 8) {
-            buffer[bufSize] = read_byte_hex();
+            buffer[bufSize] = getchar();
             bufSize++;
         }
         flash_write_enable();
         flash_write(address, buffer, bufSize);
-        //delayMs(1);
-        printf("%hd.", bytes);
+        putchar('.'); // block done.
         bytes -= bufSize;
         address += bufSize;
     }
     flash_spi_teardown();
     flash_write_disable();
-    printf("complete.\n");
+    putchar('<');
 }
 
 #define anyRxAvailable() (radioComRxAvailable() || usbComRxAvailable())
