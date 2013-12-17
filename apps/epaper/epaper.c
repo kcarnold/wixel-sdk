@@ -109,11 +109,13 @@ void cmdUpload() {
     uint16_t bytes = 264L * 176 / 8;
     uint8_t XDATA buffer[8];
     address <<= 12;
+    spi_go_max_speed(1);
     flash_write_enable();
     flash_sector_erase(address);
     delayMs(1);
     flash_write_enable();
     flash_sector_erase(address + 1);
+    delayMs(1);
     putchar('>'); // Go!
     while (bytes) {
         uint8_t bufSize = 0;
