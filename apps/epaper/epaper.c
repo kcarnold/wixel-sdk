@@ -14,6 +14,13 @@
 #include "flash.h"
 #include "epd.h"
 
+void spi_go_max_speed(uint8_t need_receive) {
+    uint8_t baudE = need_receive ? 17 : 19; // F/8 if need to receive, else F/2
+    U0BAUD = 0;
+    U0GCR &= 0xE0; // preserve CPOL, CPHA, ORDER (7:5)
+    U0GCR |= baudE; // UNGCR.BAUD_E (4:0)
+}
+
 
 void cmdFlashInfo() {
     uint8_t flash_manufacturer;
@@ -74,8 +81,10 @@ void cmdWhite() {
 
 void epd_flash_read(uint8_t XDATA *buffer, uint32_t address, uint16_t length) __reentrant {
     setDigitalOutput(PIN_PWR, 0); // switch SSEL mux to flash (yes this removes power from the EPD... I hope that's ok.)
+    spi_go_max_speed(1);
     flash_read(buffer, address, length);
     setDigitalOutput(PIN_PWR, 1);
+    spi_go_max_speed(0);
 }
 
 void cmdImage(uint8_t compensate) {
