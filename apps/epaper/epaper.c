@@ -94,6 +94,36 @@ void cmdFlashErase() {
     flash_write_disable();
 }
 
+void cmdUpload() {
+    uint32_t address = read_byte_hex();
+    uint16_t bytes = 264L * 176 / 8;
+    uint8_t XDATA buffer[8];
+    address <<= 12;
+    printf("erasing.\n");
+    flash_write_enable();
+    flash_sector_erase(address);
+    delayMs(1);
+    flash_sector_erase(address + 1);
+    //delayMs(1);
+    printf("receiving and writing %hd bytes\n", bytes);
+    while (bytes) {
+        uint8_t bufSize = 0;
+        while (bufSize < 8) {
+            buffer[bufSize] = read_byte_hex();
+            bufSize++;
+        }
+        flash_write_enable();
+        flash_write(address, buffer, bufSize);
+        //delayMs(1);
+        printf("%hd.", bytes);
+        bytes -= bufSize;
+        address += bufSize;
+    }
+    flash_spi_teardown();
+    flash_write_disable();
+    printf("complete.\n");
+}
+
 #define anyRxAvailable() (radioComRxAvailable() || usbComRxAvailable())
 #define getReceivedByte() (radioComRxAvailable() ? radioComRxReceiveByte() : usbComRxReceiveByte())
 #define comServices() do { radioComTxService(); usbComService(); } while (0)
@@ -105,6 +135,7 @@ void remoteControlService() {
     case 'f': cmdFlashInfo(); break;
     case 'd': cmdFlashRead(); break;
     case 'e': cmdFlashErase(); break;
+    case 'u': cmdUpload(); break;
     case 'w': cmdWhite(); break;
     case 'i': cmdImage(0); break;
     case 'r': cmdImage(1); break;
