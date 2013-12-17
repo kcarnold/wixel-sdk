@@ -136,7 +136,7 @@ void cmdUpload() {
 
 #define anyRxAvailable() (radioComRxAvailable() || usbComRxAvailable())
 #define getReceivedByte() (radioComRxAvailable() ? radioComRxReceiveByte() : usbComRxReceiveByte())
-#define comServices() do { radioComTxService(); usbComService(); } while (0)
+#define comServices() do { boardService(); radioComTxService(); usbComService(); } while (0)
 
 void remoteControlService() {
     if (!anyRxAvailable()) return;
