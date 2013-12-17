@@ -12,6 +12,8 @@ typedef enum {
 
 EPD_size CODE epd_size = EPD_2_7;
 
+uint8_t epd_repeat_count = 2;
+
 uint16_t CODE epd_stage_time = 630; // milliseconds
 uint16_t CODE epd_lines_per_display = 176;
 uint16_t CODE epd_dots_per_line = 264;
@@ -208,36 +210,44 @@ void epd_end() {
 // the image is arranged by line which matches the display size
 // so smallest would have 96 * 32 bytes
 
-static void epd_frame_fixed(uint8_t fixed_value, EPD_stage stage, uint16_t line, uint8_t line_count) {
+static void epd_frame_fixed(uint8_t fixed_value, EPD_stage stage, uint16_t first_line_no, uint8_t line_count) {
+    uint8_t line, i;
     if(line_count == 0) {
         line_count = epd_lines_per_display;
     }
-    while (line_count--) {
-        epd_line(line++, 0, fixed_value, stage);
+    for (i=0; i<epd_repeat_count; i++) {
+        for (line = first_line_no; line < line_count + first_line_no ; ++line) {
+            epd_line(line, 0, fixed_value, stage);
+        }
     }
 }
 
 void epd_frame_data(const uint8_t *image, EPD_stage stage, uint16_t first_line_no, uint8_t line_count) {
-    uint8_t line;
+    uint8_t line, i;
     if(line_count == 0) {
         line_count = epd_lines_per_display;
     }
-    for (line = first_line_no; line < line_count + first_line_no ; ++line)
-    {
-        epd_line(line, &image[(line - first_line_no) * epd_bytes_per_line], 0, stage);
+    for (i=0; i<epd_repeat_count; i++) {
+        for (line = first_line_no; line < line_count + first_line_no ; ++line)
+        {
+            epd_line(line, &image[(line - first_line_no) * epd_bytes_per_line], 0, stage);
+        }
     }
 }
 
 void epd_frame_cb(uint32_t address, EPD_reader *reader, EPD_stage stage, uint16_t first_line_no, uint8_t line_count) {
     uint8_t XDATA buffer[264 / 8];
     uint8_t line;
+    uint8_t i;
     if(line_count == 0)
     {
         line_count = epd_lines_per_display;
     }
-    for (line = first_line_no; line < line_count + first_line_no ; ++line) {
-        reader(buffer, address + (line - first_line_no) * epd_bytes_per_line, epd_bytes_per_line);
-        epd_line(line, buffer, 0, stage);
+    for (i=0; i<epd_repeat_count; i++) {
+        for (line = first_line_no; line < line_count + first_line_no ; ++line) {
+            reader(buffer, address + (line - first_line_no) * epd_bytes_per_line, epd_bytes_per_line);
+            epd_line(line, buffer, 0, stage);
+        }
     }
 }
 
