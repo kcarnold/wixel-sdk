@@ -149,7 +149,7 @@ void remoteControlService() {
     case 'w': cmdWhite(); break;
     case 'i': cmdImage(0); break;
     case 'r': cmdImage(1); break;
-    case 's': sleepMode2(5); break;
+    case 's': sleepMode2(read_byte_hex()); break;
     default: printf("? ");
     }
 }
