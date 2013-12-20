@@ -9,6 +9,8 @@
 #define PIN_PWM       13 // Timer 3 channel 0
 #define PIN_DISCHARGE 21
 #define PIN_PWR       11
+#define PIN_SCL       16 // i2c
+#define PIN_SDA       17
 
 
 // More conventional type definitions

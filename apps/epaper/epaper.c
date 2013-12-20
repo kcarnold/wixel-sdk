@@ -9,6 +9,7 @@
 #include <radio_link.h>
 
 #include <spi0_master.h>
+#include <i2c.h>
 
 #include "common.h"
 #include "flash.h"
@@ -134,6 +135,26 @@ void cmdUpload() {
     putchar('<');
 }
 
+#define LM75A_I2C_ADDR 0x49
+#define LM75A_CMD_TEMP 0x00
+
+#define ADDR_FOR_WRITE(addr) ((addr) << 1)
+#define ADDR_FOR_READ(addr) (((addr) << 1) | 0x01)
+
+void cmdTemp() {
+    uint16_t temp = 0;
+    i2cStart();
+    i2cWriteByte(ADDR_FOR_WRITE(LM75A_I2C_ADDR));
+    i2cWriteByte(LM75A_CMD_TEMP);
+    i2cStart();
+    i2cWriteByte(ADDR_FOR_READ(LM75A_I2C_ADDR));
+    temp = i2cReadByte(0);
+    temp <<= 8;
+    temp |= i2cReadByte(1);
+    i2cStop();
+    printf("Temp: %hd\r\n", temp);
+}
+
 #define anyRxAvailable() (radioComRxAvailable() || usbComRxAvailable())
 #define getReceivedByte() (radioComRxAvailable() ? radioComRxReceiveByte() : usbComRxReceiveByte())
 #define comServices() do { boardService(); radioComTxService(); usbComService(); } while (0)
@@ -150,6 +171,7 @@ void remoteControlService() {
     case 'i': cmdImage(0); break;
     case 'r': cmdImage(1); break;
     case 's': sleepMode2(read_byte_hex()); break;
+    case 't': cmdTemp(); break;
     default: printf("? ");
     }
 }
@@ -172,6 +194,8 @@ void main()
 {
     systemInit();
     sleepInit();
+
+    // SPI
     spi0MasterInit();
     spi0MasterSetFrequency(3000000);
     spi0MasterSetClockPhase(SPI_PHASE_EDGE_LEADING);
@@ -187,6 +211,13 @@ void main()
     setDigitalOutput(PIN_RESET, LOW);
     setDigitalOutput(PIN_DISCHARGE, LOW);
 
+    // I2C
+    i2cPinScl = PIN_SCL;
+    i2cPinSda = PIN_SDA;
+    i2cSetFrequency(100);
+    i2cSetTimeout(10);
+
+    // Let's keep USB, to make programming easier. TODO: does this increase power consumption any?
     usbInit();
 
     // Don't "enforce ordering" because we're not going to use the "control signals".
