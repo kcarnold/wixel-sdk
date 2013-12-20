@@ -8,7 +8,7 @@
 #define PIN_RESET     12 // (port 1)
 #define PIN_PWM       13 // Timer 3 channel 0
 #define PIN_DISCHARGE 21
-#define PIN_PWR       22
+#define PIN_PWR       11
 
 
 // More conventional type definitions
