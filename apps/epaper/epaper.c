@@ -19,8 +19,8 @@
 #define ADDR_FOR_WRITE(addr) ((addr) << 1)
 #define ADDR_FOR_READ(addr) (((addr) << 1) | 0x01)
 
-#define LM75A_I2C_ADDR 0x49
-#define LM75A_CMD_TEMP 0x00
+#define LM75B_I2C_ADDR 0x49
+#define LM75B_REG_TEMP 0x00
 #define LM75B_REG_CONF 0x01
 
 #define MMA8452_ADDRESS 0x1D
@@ -150,10 +150,10 @@ void cmdUpload() {
 void cmdTemp() {
     uint16_t temp = 0;
     i2cStart();
-    i2cWriteByte(ADDR_FOR_WRITE(LM75A_I2C_ADDR));
-    i2cWriteByte(LM75A_CMD_TEMP);
+    i2cWriteByte(ADDR_FOR_WRITE(LM75B_I2C_ADDR));
+    i2cWriteByte(LM75B_REG_TEMP);
     i2cStart();
-    i2cWriteByte(ADDR_FOR_READ(LM75A_I2C_ADDR));
+    i2cWriteByte(ADDR_FOR_READ(LM75B_I2C_ADDR));
     temp = i2cReadByte(0);
     temp <<= 8;
     temp |= i2cReadByte(1);
@@ -199,16 +199,16 @@ char getchar() {
 void shutdownLM75B() {
     // set the LM75B to shutdown mode to save power.
     i2cStart();
-    i2cWriteByte(ADDR_FOR_WRITE(LM75A_I2C_ADDR));
+    i2cWriteByte(ADDR_FOR_WRITE(LM75B_I2C_ADDR));
     i2cWriteByte(LM75B_REG_CONF);
     i2cWriteByte(0x01); // shutdown=1, else default.
     i2cStop();
 
     i2cStart();
-    i2cWriteByte(ADDR_FOR_WRITE(LM75A_I2C_ADDR));
+    i2cWriteByte(ADDR_FOR_WRITE(LM75B_I2C_ADDR));
     i2cWriteByte(LM75B_REG_CONF);
     i2cStart();
-    i2cWriteByte(ADDR_FOR_READ(LM75A_I2C_ADDR));
+    i2cWriteByte(ADDR_FOR_READ(LM75B_I2C_ADDR));
     printf("Config now: %x\r\n", i2cReadByte(1));
     i2cStop();
 }
