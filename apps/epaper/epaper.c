@@ -15,6 +15,18 @@
 #include "flash.h"
 #include "epd.h"
 
+// i2c constants and addresses
+#define ADDR_FOR_WRITE(addr) ((addr) << 1)
+#define ADDR_FOR_READ(addr) (((addr) << 1) | 0x01)
+
+#define LM75A_I2C_ADDR 0x49
+#define LM75A_CMD_TEMP 0x00
+#define LM75B_REG_CONF 0x01
+
+#define MMA8452_ADDRESS 0x1D
+
+
+
 void spi_go_max_speed(uint8_t need_receive) {
     uint8_t baudE = need_receive ? 17 : 19; // F/8 if need to receive, else F/2
     U0UCR |= (1<<7); // U0UCR.FLUSH = 1
@@ -135,12 +147,6 @@ void cmdUpload() {
     putchar('<');
 }
 
-#define LM75A_I2C_ADDR 0x49
-#define LM75A_CMD_TEMP 0x00
-
-#define ADDR_FOR_WRITE(addr) ((addr) << 1)
-#define ADDR_FOR_READ(addr) (((addr) << 1) | 0x01)
-
 void cmdTemp() {
     uint16_t temp = 0;
     i2cStart();
@@ -190,6 +196,23 @@ char getchar() {
     return getReceivedByte();
 }
 
+void shutdownLM75B() {
+    // set the LM75B to shutdown mode to save power.
+    i2cStart();
+    i2cWriteByte(ADDR_FOR_WRITE(LM75A_I2C_ADDR));
+    i2cWriteByte(LM75B_REG_CONF);
+    i2cWriteByte(0x01); // shutdown=1, else default.
+    i2cStop();
+
+    i2cStart();
+    i2cWriteByte(ADDR_FOR_WRITE(LM75A_I2C_ADDR));
+    i2cWriteByte(LM75B_REG_CONF);
+    i2cStart();
+    i2cWriteByte(ADDR_FOR_READ(LM75A_I2C_ADDR));
+    printf("Config now: %x\r\n", i2cReadByte(1));
+    i2cStop();
+}
+
 void main()
 {
     systemInit();
@@ -223,6 +246,8 @@ void main()
     // Don't "enforce ordering" because we're not going to use the "control signals".
     radioComRxEnforceOrdering = 0;
     radioComInit();
+
+    shutdownLM75B();
 
     while(1)
     {
