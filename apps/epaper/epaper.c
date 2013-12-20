@@ -161,6 +161,28 @@ void cmdTemp() {
     printf("Temp: %hd\r\n", temp);
 }
 
+// Read a single byte from address and return it as a byte
+uint8_t mmaReadRegister(uint8_t address) {
+    uint8_t data;
+
+    i2cStart();
+    i2cWriteByte((MMA8452_ADDRESS<<1)); // Write
+    i2cWriteByte(address); // Write register address
+    i2cStart();
+
+    i2cWriteByte((MMA8452_ADDRESS<<1)|0x01); // Read
+    data = i2cReadByte(1); // Send a NACK -> conclusion of transfer.
+
+    i2cStop();
+
+    return data;
+}
+
+void cmdAccelerometer() {
+    printf("WHOAMI: %x\n", mmaReadRegister(0x0D));
+}
+
+
 #define anyRxAvailable() (radioComRxAvailable() || usbComRxAvailable())
 #define getReceivedByte() (radioComRxAvailable() ? radioComRxReceiveByte() : usbComRxReceiveByte())
 #define comServices() do { boardService(); radioComTxService(); usbComService(); } while (0)
@@ -177,6 +199,7 @@ void remoteControlService() {
     case 'i': cmdImage(0); break;
     case 'r': cmdImage(1); break;
     case 's': sleepMode2(read_byte_hex()); break;
+    case 'a': cmdAccelerometer(); break;
     case 't': cmdTemp(); break;
     default: printf("? ");
     }
