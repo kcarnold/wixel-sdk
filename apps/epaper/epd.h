@@ -11,4 +11,4 @@ void epd_begin();
 void epd_end();
 void epd_clear();
 
-void epd_frame_cb(uint32_t address, EPD_reader *reader, EPD_stage stage, uint16_t first_line_no, uint8_t line_count);
+void epd_frame_cb(uint32_t address, EPD_reader *reader, EPD_stage stage, uint8_t repeat_count, uint16_t first_line_no, uint8_t line_count);

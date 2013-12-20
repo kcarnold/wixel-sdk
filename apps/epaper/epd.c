@@ -235,7 +235,7 @@ void epd_frame_data(const uint8_t *image, EPD_stage stage, uint16_t first_line_n
     }
 }
 
-void epd_frame_cb(uint32_t address, EPD_reader *reader, EPD_stage stage, uint16_t first_line_no, uint8_t line_count) {
+void epd_frame_cb(uint32_t address, EPD_reader *reader, EPD_stage stage, uint8_t repeat_count, uint16_t first_line_no, uint8_t line_count) {
     uint8_t XDATA buffer[264 / 8];
     uint8_t line;
     uint8_t i;
@@ -243,7 +243,7 @@ void epd_frame_cb(uint32_t address, EPD_reader *reader, EPD_stage stage, uint16_
     {
         line_count = epd_lines_per_display;
     }
-    for (i=0; i<epd_repeat_count; i++) {
+    for (i=0; i<repeat_count; i++) {
         for (line = first_line_no; line < line_count + first_line_no ; ++line) {
             reader(buffer, address + (line - first_line_no) * epd_bytes_per_line, epd_bytes_per_line);
             epd_line(line, buffer, 0, stage);

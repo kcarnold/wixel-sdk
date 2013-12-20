@@ -92,8 +92,8 @@ void cmdImage(uint8_t compensate) {
     uint32_t address = read_byte_hex();
     address <<= 12;
     epd_begin();
-    epd_frame_cb(address, epd_flash_read, compensate ? EPD_compensate : EPD_inverse, 0, 0);
-    epd_frame_cb(address, epd_flash_read, compensate ? EPD_white : EPD_normal, 0, 0);
+    epd_frame_cb(address, epd_flash_read, compensate ? EPD_compensate : EPD_inverse, 1, 0, 0);
+    epd_frame_cb(address, epd_flash_read, compensate ? EPD_white : EPD_normal, 2, 0, 0);
     epd_end();
 }
 
