@@ -114,7 +114,7 @@ void cmdUpload() {
     flash_sector_erase(address);
     delayMs(1);
     flash_write_enable();
-    flash_sector_erase(address + 1);
+    flash_sector_erase(address + (1<<12));
     delayMs(1);
     putchar('>'); // Go!
     while (bytes) {
