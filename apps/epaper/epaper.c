@@ -200,6 +200,16 @@ void cmdAccelerometer() {
   }
 }
 
+void goToSleep() {
+  // Turn off the display
+  //setDigitalOutput(10, 0);
+  setDigitalInput(10, HIGH_IMPEDANCE);
+  sleepMode2(read_byte_hex());
+  // Turn it back on.
+  setDigitalOutput(10, 1);
+  delayMs(10);
+}
+
 
 #define anyRxAvailable() (radioComRxAvailable() || usbComRxAvailable())
 #define getReceivedByte() (radioComRxAvailable() ? radioComRxReceiveByte() : usbComRxReceiveByte())
@@ -216,7 +226,7 @@ void remoteControlService() {
     case 'w': cmdWhite(); break;
     case 'i': cmdImage(0); break;
     case 'r': cmdImage(1); break;
-    case 's': sleepMode2(read_byte_hex()); break;
+    case 's': goToSleep(); break;
     case 'a': cmdAccelerometer(); break;
     case 't': cmdTemp(); break;
     default: printf("? ");
