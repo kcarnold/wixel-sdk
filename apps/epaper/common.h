@@ -17,3 +17,6 @@
 typedef uint8 uint8_t;
 typedef uint16 uint16_t;
 typedef uint32 uint32_t;
+
+#define ADDR_FOR_WRITE(addr) ((addr) << 1)
+#define ADDR_FOR_READ(addr) (((addr) << 1) | 0x01)
