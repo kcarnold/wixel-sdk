@@ -11,6 +11,7 @@
 #define PIN_PWR       11
 #define PIN_SCL       16 // i2c
 #define PIN_SDA       17
+#define PIN_EPD_3V3   10
 
 
 // More conventional type definitions

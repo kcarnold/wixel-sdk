@@ -202,11 +202,10 @@ void cmdAccelerometer() {
 
 void goToSleep() {
   // Turn off the display
-  //setDigitalOutput(10, 0);
-  setDigitalInput(10, HIGH_IMPEDANCE);
+  setDigitalInput(PIN_EPD_3V3, HIGH_IMPEDANCE);
   sleepMode2(read_byte_hex());
   // Turn it back on.
-  setDigitalOutput(10, 1);
+  setDigitalOutput(PIN_EPD_3V3, 1);
   delayMs(10);
 }
 
