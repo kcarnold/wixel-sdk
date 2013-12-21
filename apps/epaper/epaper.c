@@ -187,8 +187,46 @@ void mmaWriteRegister(uint8_t address, uint8_t data) {
 }
 
 void cmdAccelerometer() {
+    uint8_t pulse_src = mmaReadRegister(MMA_PULSE_SRC);
     printf("WHOAMI: %x\r\n", mmaReadRegister(0x0D));
-    printf("PULSE_SRC: %x\r\n", mmaReadRegister(MMA_PULSE_SRC));
+    printf("PULSE_SRC: %x\r\n", pulse_src);
+
+
+  if ((pulse_src & 0x10)==0x10) // If AxX bit is set
+  {
+    if ((pulse_src & 0x08)==0x08) // If DPE (double puls) bit is set
+      printf(" Double Tap (2) on X"); // tabbing here for visibility
+    else
+      printf("Single (1) tap on X");
+
+    if ((pulse_src & 0x01)==0x01) // If PoIX is set
+      printf(" +\r\n");
+    else
+      printf(" -\r\n");
+  }
+  if ((pulse_src & 0x20)==0x20) // If AxY bit is set
+  {
+    if ((pulse_src & 0x08)==0x08) // If DPE (double puls) bit is set
+      printf(" Double Tap (2) on Y");
+    else
+      printf("Single (1) tap on Y");
+
+    if ((pulse_src & 0x02)==0x02) // If PoIY is set
+      printf(" +\r\n");
+    else
+      printf(" -\r\n");
+  }
+  if ((pulse_src & 0x40)==0x40) // If AxZ bit is set
+  {
+    if ((pulse_src & 0x08)==0x08) // If DPE (double puls) bit is set
+      printf(" Double Tap (2) on Z");
+    else
+      printf("Single (1) tap on Z");
+    if ((pulse_src & 0x04)==0x04) // If PoIZ is set
+      printf(" +\r\n");
+    else
+      printf(" -\r\n");
+  }
 }
 
 
@@ -354,7 +392,7 @@ void main()
 
     initMMA8452(
         2, // SCALE: Sets full-scale range to +/-2, 4, or 8g. Used to calc real g values.
-        0 // dataRate: 0=800Hz, 1=400, 2=200, 3=100, 4=50, 5=12.5, 6=6.25, 7=1.56
+        2 // dataRate: 0=800Hz, 1=400, 2=200, 3=100, 4=50, 5=12.5, 6=6.25, 7=1.56
         );
 
     while(1)
