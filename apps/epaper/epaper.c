@@ -27,9 +27,9 @@
 #define getReceivedByte() (radioComRxAvailable() ? radioComRxReceiveByte() : usbComRxReceiveByte())
 #define comServices() do { boardService(); radioComTxService(); usbComService(); } while (0)
 
-#define MIN_AWAKE_INTERVAL 15000
+#define MIN_AWAKE_INTERVAL 5000
 
-uint16_t sleep_interval_sec = 2;
+uint16_t sleep_interval_sec = 10;
 
 void spi_go_max_speed(uint8_t need_receive) {
     uint8_t baudE = need_receive ? 17 : 19; // F/8 if need to receive, else F/2
