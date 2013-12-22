@@ -250,24 +250,6 @@ void goToSleep(uint16_t duration_sec) {
 }
 
 
-void remoteControlService() {
-    if (!anyRxAvailable()) return;
-
-    switch(getReceivedByte()) {
-    case 'f': cmdFlashInfo(); break;
-    case 'd': cmdFlashRead(); break;
-    case 'e': cmdFlashErase(); break;
-    case 'u': cmdUpload(); break;
-    case 'w': cmdWhite(); break;
-    case 'i': cmdImage(0); break;
-    case 'r': cmdImage(1); break;
-    case 's': goToSleep(read_byte_hex()); break;
-    case 'a': cmdAccelerometer(); break;
-    case 't': cmdTemp(); break;
-    default: printf("? ");
-    }
-}
-
 #define MAX_SEQUENCE_COMMANDS 32
 #define EVENT_END    0
 #define EVENT_TIMER  1
@@ -299,6 +281,24 @@ void updateDisplay() {
     // Assume for the moment that the cause of wake-up was always the timer.
     cur_image = get_next_image(EVENT_TIMER, 0);
     show_image(cur_image, 0);
+}
+
+void remoteControlService() {
+    if (!anyRxAvailable()) return;
+
+    switch(getReceivedByte()) {
+    case 'f': cmdFlashInfo(); break;
+    case 'd': cmdFlashRead(); break;
+    case 'e': cmdFlashErase(); break;
+    case 'u': cmdUpload(); break;
+    case 'w': cmdWhite(); break;
+    case 'i': cmdImage(0); break;
+    case 'r': cmdImage(1); break;
+    case 's': goToSleep(read_byte_hex()); break;
+    case 'a': cmdAccelerometer(); break;
+    case 't': cmdTemp(); break;
+    default: printf("? ");
+    }
 }
 
 // Called by printf.
