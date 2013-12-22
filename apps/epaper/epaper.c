@@ -16,6 +16,8 @@
 #include "epd.h"
 #include "mma.h"
 
+extern uint8 DATA radioLinkTxCurrentPacketTries;
+
 // i2c constants and addresses
 #define LM75B_I2C_ADDR 0x49
 #define LM75B_REG_TEMP 0x00
@@ -417,8 +419,11 @@ void main()
     while(1)
     {
         uint32_t woke_up_at = getMs();
-        putchar('!');
+        radioLinkTxCurrentPacketTries = 1; // Retry any sends that were in progress.
         comServices();
+        // Opportunistically send an I-woke-up packet.
+        if (radioComTxAvailable())
+            radioComTxSendByte('!');
         updateDisplay();
         while (getMs() - woke_up_at < MIN_AWAKE_INTERVAL) {
             comServices();
