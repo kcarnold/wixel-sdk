@@ -268,9 +268,36 @@ void remoteControlService() {
     }
 }
 
+#define MAX_SEQUENCE_COMMANDS 32
+#define EVENT_END    0
+#define EVENT_TIMER  1
+#define EVENT_TAP    2
 uint16_t cur_image = 0;
+struct {
+    uint8_t event_type;
+    uint8_t event_arg;
+    uint8_t src_image;
+    uint8_t tgt_image;
+} XDATA sequence_commands[MAX_SEQUENCE_COMMANDS];
+
+uint8_t get_next_image(uint8_t event_type, uint8_t event_arg) {
+    uint8_t i;
+    for (i=0; i<MAX_SEQUENCE_COMMANDS; i++) {
+        uint8_t this_event_type = sequence_commands[i].event_type;
+        if (this_event_type == 0) break; // end of list.
+        if (sequence_commands[i].src_image != cur_image) continue;
+        if (this_event_type == event_type) {
+            if (event_type == EVENT_TIMER) {
+                return sequence_commands[i].tgt_image;
+            }
+        }
+    }
+    return 0; // default image, in case something goes wrong.
+}
+
 void updateDisplay() {
-    cur_image = (cur_image + 1) % 5;
+    // Assume for the moment that the cause of wake-up was always the timer.
+    cur_image = get_next_image(EVENT_TIMER, 0);
     show_image(cur_image, 0);
 }
 
@@ -329,6 +356,17 @@ void main()
         2, // SCALE: Sets full-scale range to +/-2, 4, or 8g. Used to calc real g values.
         2 // dataRate: 0=800Hz, 1=400, 2=200, 3=100, 4=50, 5=12.5, 6=6.25, 7=1.56
         );
+
+    {
+        // Temporarily load in some sequence commands.
+        uint8_t i;
+        for (i=0; i<5; i++) {
+            sequence_commands[i].event_type = EVENT_TIMER;
+            sequence_commands[i].src_image = (i+1) % 5;
+            sequence_commands[i].tgt_image = i;
+        }
+        sequence_commands[i].event_type = EVENT_END;
+    }
 
     while(1)
     {
