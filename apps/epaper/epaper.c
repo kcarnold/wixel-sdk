@@ -27,7 +27,9 @@
 #define getReceivedByte() (radioComRxAvailable() ? radioComRxReceiveByte() : usbComRxReceiveByte())
 #define comServices() do { boardService(); radioComTxService(); usbComService(); } while (0)
 
+#define MIN_AWAKE_INTERVAL 15000
 
+uint16_t sleep_interval_sec = 2;
 
 void spi_go_max_speed(uint8_t need_receive) {
     uint8_t baudE = need_receive ? 17 : 19; // F/8 if need to receive, else F/2
@@ -104,13 +106,17 @@ void epd_flash_read(uint8_t XDATA *buffer, uint32_t address, uint16_t length) __
     spi_go_max_speed(0);
 }
 
-void cmdImage(uint8_t compensate) {
-    uint32_t address = read_byte_hex();
-    address <<= 12;
+void show_image(uint8_t image_idx, uint8_t compensate) {
+    uint32_t address = image_idx;
+    address <<= (12 + 1); // each image takes up two sectors.
     epd_begin();
     epd_frame_cb(address, epd_flash_read, compensate ? EPD_compensate : EPD_inverse, 1, 0, 0);
     epd_frame_cb(address, epd_flash_read, compensate ? EPD_white : EPD_normal, 2, 0, 0);
     epd_end();
+}
+
+void cmdImage(uint8_t compensate) {
+    show_image(read_byte_hex(), compensate);
 }
 
 void cmdFlashErase() {
@@ -237,9 +243,9 @@ void power_on_epd() {
 }
 
 
-void goToSleep() {
+void goToSleep(uint16_t duration_sec) {
     power_off_epd();
-    sleepMode2(read_byte_hex());
+    sleepMode2(duration_sec);
     power_on_epd();
 }
 
@@ -255,11 +261,17 @@ void remoteControlService() {
     case 'w': cmdWhite(); break;
     case 'i': cmdImage(0); break;
     case 'r': cmdImage(1); break;
-    case 's': goToSleep(); break;
+    case 's': goToSleep(read_byte_hex()); break;
     case 'a': cmdAccelerometer(); break;
     case 't': cmdTemp(); break;
     default: printf("? ");
     }
+}
+
+uint16_t cur_image = 0;
+void updateDisplay() {
+    cur_image = (cur_image + 1) % 5;
+    show_image(cur_image, 0);
 }
 
 // Called by printf.
@@ -320,10 +332,14 @@ void main()
 
     while(1)
     {
-        boardService();
-        radioComTxService();
-        usbComService();
-
-        remoteControlService();
+        uint16_t woke_up_at = getMs();
+        putchar('!');
+        comServices();
+        updateDisplay();
+        while (getMs() - woke_up_at < MIN_AWAKE_INTERVAL) {
+            comServices();
+            remoteControlService();
+        }
+        goToSleep(sleep_interval_sec);
     }
 }
