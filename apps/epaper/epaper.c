@@ -245,9 +245,38 @@ void power_on_epd() {
 }
 
 
-void goToSleep(uint16_t duration_sec) {
+void goToSleep(uint16_t duration_sec) __critical {
     power_off_epd();
-    sleepMode2(duration_sec);
+    __critical {
+        // Save I/O registers
+        uint8_t _P0 = P0, _P1 = P1, _P2 = P2;
+        uint8_t _P0SEL = P0SEL, _P1SEL = P1SEL, _P2SEL = P2SEL;
+        uint8_t _P0DIR = P0DIR, _P1DIR = P1DIR, _P2DIR = P2DIR;
+        uint8_t _P0INP = P0INP, _P1INP = P1INP, _P2INP = P2INP;
+
+        // Drive all outputs low, except leave I2C floating.
+        // Start with port 1, since that turns off the EPD.
+        P1 = 0;
+        P0 = 0;
+        P2 &= 0x1F; // USB has the top 3.
+
+        P0DIR = 0b11111100; // Drive all low except the I2C pins
+        P0INP = 0x03; // Tristate the I2C.
+        P1DIR = 0xff;
+        P2DIR |= 0x1F; // top 3 are peripheral priority control.
+
+        P0SEL = P1SEL = P2SEL = 0;
+
+        // Sleep.
+        sleepMode2(duration_sec);
+
+        // Restore I/O registers
+        P0 = _P0, P1 = _P1, P2 = _P2;
+        P0SEL = _P0SEL, P1SEL = _P1SEL, P2SEL = _P2SEL;
+        P0DIR = _P0DIR, P1DIR = _P1DIR, P2DIR = _P2DIR;
+        P0INP = _P0INP, P1INP = _P1INP, P2INP = _P2INP;
+
+    }
     power_on_epd();
 }
 
