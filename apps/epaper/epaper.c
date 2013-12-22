@@ -251,10 +251,10 @@ void goToSleep(uint16_t duration_sec) {
 
 
 #define MAX_SEQUENCE_COMMANDS 32
-#define EVENT_END    0
 #define EVENT_TIMER  1
 #define EVENT_TAP    2
 uint16_t cur_image = 0;
+uint8_t num_seq_commands = 0;
 struct {
     uint8_t event_type;
     uint8_t event_arg;
@@ -264,11 +264,9 @@ struct {
 
 uint8_t get_next_image(uint8_t event_type, uint8_t event_arg) {
     uint8_t i;
-    for (i=0; i<MAX_SEQUENCE_COMMANDS; i++) {
-        uint8_t this_event_type = sequence_commands[i].event_type;
-        if (this_event_type == 0) break; // end of list.
+    for (i=0; i<num_seq_commands; i++) {
         if (sequence_commands[i].src_image != cur_image) continue;
-        if (this_event_type == event_type) {
+        if (sequence_commands[i].event_type == event_type) {
             if (event_type == EVENT_TIMER) {
                 return sequence_commands[i].tgt_image;
             }
@@ -283,6 +281,21 @@ void updateDisplay() {
     show_image(cur_image, 0);
 }
 
+// Updates the list of sequence commands.
+void cmdLoadSeqCommands() {
+    uint8_t i;
+    num_seq_commands = getchar();
+    putchar('>'); // Go!
+    for (i=0; i<num_seq_commands; i++) {
+        sequence_commands[i].event_type = getchar();
+        sequence_commands[i].event_arg = getchar();
+        sequence_commands[i].src_image = getchar();
+        sequence_commands[i].tgt_image = getchar();
+        putchar('.');
+    }
+    putchar('<'); // done.
+}
+
 void remoteControlService() {
     if (!anyRxAvailable()) return;
 
@@ -294,6 +307,7 @@ void remoteControlService() {
     case 'w': cmdWhite(); break;
     case 'i': cmdImage(0); break;
     case 'r': cmdImage(1); break;
+    case 'L': cmdLoadSeqCommands(); break;
     case 's': goToSleep(read_byte_hex()); break;
     case 'a': cmdAccelerometer(); break;
     case 't': cmdTemp(); break;
@@ -360,12 +374,12 @@ void main()
     {
         // Temporarily load in some sequence commands.
         uint8_t i;
+        num_seq_commands = 5;
         for (i=0; i<5; i++) {
             sequence_commands[i].event_type = EVENT_TIMER;
             sequence_commands[i].src_image = (i+1) % 5;
             sequence_commands[i].tgt_image = i;
         }
-        sequence_commands[i].event_type = EVENT_END;
     }
 
     while(1)
