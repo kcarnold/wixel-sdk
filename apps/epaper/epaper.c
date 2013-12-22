@@ -384,7 +384,7 @@ void main()
 
     while(1)
     {
-        uint16_t woke_up_at = getMs();
+        uint32_t woke_up_at = getMs();
         putchar('!');
         comServices();
         updateDisplay();
