@@ -22,6 +22,13 @@
 #define LM75B_REG_CONF 0x01
 
 
+// Comm services
+#define anyRxAvailable() (radioComRxAvailable() || usbComRxAvailable())
+#define getReceivedByte() (radioComRxAvailable() ? radioComRxReceiveByte() : usbComRxReceiveByte())
+#define comServices() do { boardService(); radioComTxService(); usbComService(); } while (0)
+
+
+
 void spi_go_max_speed(uint8_t need_receive) {
     uint8_t baudE = need_receive ? 17 : 19; // F/8 if need to receive, else F/2
     U0UCR |= (1<<7); // U0UCR.FLUSH = 1
@@ -93,6 +100,7 @@ void epd_flash_read(uint8_t XDATA *buffer, uint32_t address, uint16_t length) __
     spi_go_max_speed(1);
     flash_read(buffer, address, length);
     setDigitalOutput(PIN_PWR, 1);
+    comServices();
     spi_go_max_speed(0);
 }
 
@@ -235,10 +243,6 @@ void goToSleep() {
   power_on_epd();
 }
 
-
-#define anyRxAvailable() (radioComRxAvailable() || usbComRxAvailable())
-#define getReceivedByte() (radioComRxAvailable() ? radioComRxReceiveByte() : usbComRxReceiveByte())
-#define comServices() do { boardService(); radioComTxService(); usbComService(); } while (0)
 
 void remoteControlService() {
     if (!anyRxAvailable()) return;
