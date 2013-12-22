@@ -227,20 +227,20 @@ void shutdownLM75B() {
 
 
 void power_off_epd() {
-  setDigitalInput(PIN_EPD_3V3, HIGH_IMPEDANCE);
+    setDigitalInput(PIN_EPD_3V3, HIGH_IMPEDANCE);
 }
 
 void power_on_epd() {
-  setDigitalOutput(PIN_EPD_3V3, 1);
-  delayMs(100);
-  shutdownLM75B();
+    setDigitalOutput(PIN_EPD_3V3, 1);
+    delayMs(100);
+    shutdownLM75B();
 }
 
 
 void goToSleep() {
-  power_off_epd();
-  sleepMode2(read_byte_hex());
-  power_on_epd();
+    power_off_epd();
+    sleepMode2(read_byte_hex());
+    power_on_epd();
 }
 
 
