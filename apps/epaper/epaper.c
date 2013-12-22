@@ -200,13 +200,39 @@ void cmdAccelerometer() {
   }
 }
 
-void goToSleep() {
-  // Turn off the display
+void shutdownLM75B() {
+    // set the LM75B to shutdown mode to save power.
+    i2cStart();
+    i2cWriteByte(ADDR_FOR_WRITE(LM75B_I2C_ADDR));
+    i2cWriteByte(LM75B_REG_CONF);
+    i2cWriteByte(0x01); // shutdown=1, else default.
+    i2cStop();
+
+    i2cStart();
+    i2cWriteByte(ADDR_FOR_WRITE(LM75B_I2C_ADDR));
+    i2cWriteByte(LM75B_REG_CONF);
+    i2cStart();
+    i2cWriteByte(ADDR_FOR_READ(LM75B_I2C_ADDR));
+    printf("Config now: %x\r\n", i2cReadByte(1));
+    i2cStop();
+}
+
+
+void power_off_epd() {
   setDigitalInput(PIN_EPD_3V3, HIGH_IMPEDANCE);
-  sleepMode2(read_byte_hex());
-  // Turn it back on.
+}
+
+void power_on_epd() {
   setDigitalOutput(PIN_EPD_3V3, 1);
-  delayMs(10);
+  delayMs(100);
+  shutdownLM75B();
+}
+
+
+void goToSleep() {
+  power_off_epd();
+  sleepMode2(read_byte_hex());
+  power_on_epd();
 }
 
 
@@ -246,23 +272,6 @@ char getchar() {
     return getReceivedByte();
 }
 
-void shutdownLM75B() {
-    // set the LM75B to shutdown mode to save power.
-    i2cStart();
-    i2cWriteByte(ADDR_FOR_WRITE(LM75B_I2C_ADDR));
-    i2cWriteByte(LM75B_REG_CONF);
-    i2cWriteByte(0x01); // shutdown=1, else default.
-    i2cStop();
-
-    i2cStart();
-    i2cWriteByte(ADDR_FOR_WRITE(LM75B_I2C_ADDR));
-    i2cWriteByte(LM75B_REG_CONF);
-    i2cStart();
-    i2cWriteByte(ADDR_FOR_READ(LM75B_I2C_ADDR));
-    printf("Config now: %x\r\n", i2cReadByte(1));
-    i2cStop();
-}
-
 
 void main()
 {
@@ -298,7 +307,7 @@ void main()
     radioComRxEnforceOrdering = 0;
     radioComInit();
 
-    shutdownLM75B();
+    power_on_epd();
 
     initMMA8452(
         2, // SCALE: Sets full-scale range to +/-2, 4, or 8g. Used to calc real g values.
