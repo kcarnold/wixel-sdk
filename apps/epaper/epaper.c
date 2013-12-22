@@ -221,13 +221,15 @@ void shutdownLM75B() {
     i2cWriteByte(LM75B_REG_CONF);
     i2cWriteByte(0x01); // shutdown=1, else default.
     i2cStop();
+}
 
+void cmdReadLM75BConfig() {
     i2cStart();
     i2cWriteByte(ADDR_FOR_WRITE(LM75B_I2C_ADDR));
     i2cWriteByte(LM75B_REG_CONF);
     i2cStart();
     i2cWriteByte(ADDR_FOR_READ(LM75B_I2C_ADDR));
-    printf("Config now: %x\r\n", i2cReadByte(1));
+    printf("%x", i2cReadByte(1));
     i2cStop();
 }
 
@@ -311,6 +313,7 @@ void remoteControlService() {
     case 's': goToSleep(read_byte_hex()); break;
     case 'a': cmdAccelerometer(); break;
     case 't': cmdTemp(); break;
+    case 'T': cmdReadLM75BConfig(); break;
     default: printf("? ");
     }
 }
