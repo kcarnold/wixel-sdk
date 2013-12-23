@@ -283,7 +283,7 @@ void goToSleep(uint16_t duration_sec) __critical {
 }
 
 
-#define MAX_SEQUENCE_COMMANDS 32
+#define MAX_SEQUENCE_COMMANDS 64
 #define EVENT_TIMER  1
 #define EVENT_TAP    2
 uint16_t cur_image = 0;
