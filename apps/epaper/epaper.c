@@ -463,10 +463,10 @@ void main()
         if (radioComTxAvailable())
             radioComTxSendByte('!');
         updateDisplay();
-        while (getMs() - woke_up_at < MIN_AWAKE_INTERVAL) {
+        do {
             comServices();
             remoteControlService();
-        }
+        } while (getMs() - woke_up_at < MIN_AWAKE_INTERVAL);
         goToSleep(sleep_interval_sec);
     }
 }
