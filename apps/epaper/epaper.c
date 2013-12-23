@@ -23,6 +23,9 @@ extern uint8 DATA radioLinkTxCurrentPacketTries;
 #define LM75B_REG_TEMP 0x00
 #define LM75B_REG_CONF 0x01
 
+// Flash layout
+#define SEQ_DATA_SECTOR 31
+#define SEQ_DATA_BASE (SEQ_DATA_SECTOR << 12)
 
 // Comm services
 #define anyRxAvailable() (radioComRxAvailable() || usbComRxAvailable())
@@ -316,6 +319,29 @@ void updateDisplay() {
     show_image(cur_image, 0);
 }
 
+uint8_t XDATA sd_ref_code[2] = {'s', 'd'};
+
+void readSeqCommandsFromFlash() {
+    uint8_t XDATA code[2];
+    // Check for validity.
+    flash_read(code, SEQ_DATA_BASE, 2);
+    if (code[0] != sd_ref_code[0] || code[1] != sd_ref_code[1]) return;
+
+    // Load!
+    flash_read((uint8_t XDATA *) &seq_data, SEQ_DATA_BASE + 2, sizeof(seq_data));
+}
+
+void saveSeqCommandsToFlash() {
+    flash_write_enable();
+    flash_sector_erase(SEQ_DATA_BASE);
+    flash_write_enable();
+    flash_write(SEQ_DATA_BASE, sd_ref_code, 2);
+    flash_write_enable();
+    flash_write(SEQ_DATA_BASE + 2, (uint8_t XDATA *) &seq_data, sizeof(seq_data));
+    flash_spi_teardown();
+    flash_write_disable();
+}
+
 // Updates the list of sequence commands.
 void cmdLoadSeqCommands() {
     uint8_t i;
@@ -329,6 +355,7 @@ void cmdLoadSeqCommands() {
         putchar('.');
     }
     putchar('<'); // done.
+    saveSeqCommandsToFlash();
 }
 
 void remoteControlService() {
@@ -407,16 +434,7 @@ void main()
         2 // dataRate: 0=800Hz, 1=400, 2=200, 3=100, 4=50, 5=12.5, 6=6.25, 7=1.56
         );
 
-    {
-        // Temporarily load in some sequence commands.
-        uint8_t i;
-        seq_data.num = 5;
-        for (i=0; i<5; i++) {
-            seq_data.commands[i].event_type = EVENT_TIMER;
-            seq_data.commands[i].src_image = (i+1) % 5;
-            seq_data.commands[i].tgt_image = i;
-        }
-    }
+    readSeqCommandsFromFlash();
 
     while(1)
     {
