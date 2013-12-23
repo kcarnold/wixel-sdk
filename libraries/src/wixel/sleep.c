@@ -98,7 +98,7 @@ void sleepMode1(uint16 seconds)
    boardClockInit(); 
 }
 
-void sleepMode2(uint16 seconds)
+void sleepMode2(uint16 seconds, uint8 port_interrupts)
 {
    unsigned char temp;
    unsigned short desired_event0;
@@ -146,7 +146,15 @@ void sleepMode2(uint16 seconds)
    IEN0 &= 0xA0;
    IEN1 &= ~0x3F;
    IEN2 &= ~0x3F;
-          
+
+   // Re-enable interrupts for desired ports
+   if (port_interrupts & SLEEP_INTERRUPT_PORT0)
+      IEN1 |= (1<<5); // port 0 -> set P0IE
+   if (port_interrupts & SLEEP_INTERRUPT_PORT1)
+      IEN2 |= (1<<4); // port 1 -> set P1IE
+   if (port_interrupts & SLEEP_INTERRUPT_PORT2)
+      IEN2 |= (1<<1); // port 2 -> set P2IE
+
    WORCTRL |= 0x04; // Reset Sleep Timer
    temp = WORTIME0;
    while(temp == WORTIME0); // Wait until a positive 32 kHz edge

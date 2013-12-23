@@ -273,7 +273,7 @@ void goToSleep(uint16_t duration_sec) __critical {
         P0SEL = P1SEL = P2SEL = 0;
 
         // Sleep.
-        sleepMode2(duration_sec);
+        sleepMode2(duration_sec, 0);
 
         // Restore I/O registers
         P0 = _P0, P1 = _P1, P2 = _P2;
