@@ -32,6 +32,8 @@ extern uint8 DATA radioLinkTxCurrentPacketTries;
 #define getReceivedByte() (radioComRxAvailable() ? radioComRxReceiveByte() : usbComRxReceiveByte())
 #define comServices() do { boardService(); radioComTxService(); usbComService(); } while (0)
 
+BIT writesAreBlocking = 0;
+
 #define MIN_AWAKE_INTERVAL 5000
 
 uint16_t sleep_interval_sec = 10;
@@ -374,6 +376,7 @@ void cmdLoadSeqCommands() {
 void remoteControlService() {
     if (!anyRxAvailable()) return;
 
+    writesAreBlocking = 1;
     switch(getReceivedByte()) {
     case 'f': cmdFlashInfo(); break;
     case 'd': cmdFlashRead(); break;
@@ -389,12 +392,13 @@ void remoteControlService() {
     case 'T': cmdReadLM75BConfig(); break;
     default: printf("? ");
     }
+    writesAreBlocking = 0;
 }
 
 // Called by printf.
 void putchar(char c)
 {
-    while (!radioComTxAvailable()) radioComTxService();
+    while (writesAreBlocking && !radioComTxAvailable()) radioComTxService();
     if (usbComTxAvailable()) usbComTxSendByte(c);
     if (radioComTxAvailable()) radioComTxSendByte(c);
 }
@@ -454,14 +458,15 @@ void main()
 
     readSeqCommandsFromFlash();
 
+    writesAreBlocking = 0;
+
     while(1)
     {
         uint32_t woke_up_at = getMs();
         radioLinkTxCurrentPacketTries = 1; // Retry any sends that were in progress.
         comServices();
         // Opportunistically send an I-woke-up packet.
-        if (radioComTxAvailable())
-            radioComTxSendByte('!');
+        putchar('!');
         updateDisplay();
         do {
             comServices();
