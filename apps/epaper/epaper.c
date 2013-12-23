@@ -287,21 +287,23 @@ void goToSleep(uint16_t duration_sec) __critical {
 #define EVENT_TIMER  1
 #define EVENT_TAP    2
 uint16_t cur_image = 0;
-uint8_t num_seq_commands = 0;
 struct {
-    uint8_t event_type;
-    uint8_t event_arg;
-    uint8_t src_image;
-    uint8_t tgt_image;
-} XDATA sequence_commands[MAX_SEQUENCE_COMMANDS];
+    uint8_t num;
+    struct {
+        uint8_t event_type;
+        uint8_t event_arg;
+        uint8_t src_image;
+        uint8_t tgt_image;
+    } commands[MAX_SEQUENCE_COMMANDS];
+} XDATA seq_data;
 
 uint8_t get_next_image(uint8_t event_type, uint8_t event_arg) {
     uint8_t i;
-    for (i=0; i<num_seq_commands; i++) {
-        if (sequence_commands[i].src_image != cur_image) continue;
-        if (sequence_commands[i].event_type == event_type) {
+    for (i=0; i<seq_data.num; i++) {
+        if (seq_data.commands[i].src_image != cur_image) continue;
+        if (seq_data.commands[i].event_type == event_type) {
             if (event_type == EVENT_TIMER) {
-                return sequence_commands[i].tgt_image;
+                return seq_data.commands[i].tgt_image;
             }
         }
     }
@@ -317,13 +319,13 @@ void updateDisplay() {
 // Updates the list of sequence commands.
 void cmdLoadSeqCommands() {
     uint8_t i;
-    num_seq_commands = getchar();
+    seq_data.num = getchar();
     putchar('>'); // Go!
-    for (i=0; i<num_seq_commands; i++) {
-        sequence_commands[i].event_type = getchar();
-        sequence_commands[i].event_arg = getchar();
-        sequence_commands[i].src_image = getchar();
-        sequence_commands[i].tgt_image = getchar();
+    for (i=0; i<seq_data.num; i++) {
+        seq_data.commands[i].event_type = getchar();
+        seq_data.commands[i].event_arg = getchar();
+        seq_data.commands[i].src_image = getchar();
+        seq_data.commands[i].tgt_image = getchar();
         putchar('.');
     }
     putchar('<'); // done.
@@ -408,11 +410,11 @@ void main()
     {
         // Temporarily load in some sequence commands.
         uint8_t i;
-        num_seq_commands = 5;
+        seq_data.num = 5;
         for (i=0; i<5; i++) {
-            sequence_commands[i].event_type = EVENT_TIMER;
-            sequence_commands[i].src_image = (i+1) % 5;
-            sequence_commands[i].tgt_image = i;
+            seq_data.commands[i].event_type = EVENT_TIMER;
+            seq_data.commands[i].src_image = (i+1) % 5;
+            seq_data.commands[i].tgt_image = i;
         }
     }
 
