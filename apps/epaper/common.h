@@ -9,6 +9,7 @@
 #define PIN_PWM       13 // Timer 3 channel 0
 #define PIN_DISCHARGE 21
 #define PIN_PWR       11
+#define PIN_INTERRUPT 15 // accelerometer interrupt pin
 #define PIN_SCL       17 // i2c
 #define PIN_SDA       16
 #define PIN_EPD_3V3   10
