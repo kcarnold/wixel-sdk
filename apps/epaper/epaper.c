@@ -471,6 +471,10 @@ void main()
         do {
             comServices();
             remoteControlService();
+            if (port_interrupt_occurred) {
+                cmdAccelerometer();
+                port_interrupt_occurred = 0;
+            }
         } while (getMs() - woke_up_at < MIN_AWAKE_INTERVAL);
         goToSleep(sleep_interval_sec);
     }
