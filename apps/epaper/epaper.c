@@ -249,6 +249,19 @@ void power_on_epd() {
     shutdownLM75B();
 }
 
+// Wake-from-port-interrupt ISR
+BIT volatile port_interrupt_occurred = 0;
+ISR(P1INT, 0) // bank = 0 means compiler must restore registers.
+{
+    // Clear the port-level interrupt flag so this ISR doesn't run again.
+    P1IFG = 0;
+
+    // Clear IRCON2.P1IF
+    IRCON2 &= ~(1<<3);
+
+    port_interrupt_occurred = 1;
+}
+
 
 void goToSleep(uint16_t duration_sec) __critical {
     power_off_epd();
@@ -273,7 +286,7 @@ void goToSleep(uint16_t duration_sec) __critical {
         P0SEL = P1SEL = P2SEL = 0;
 
         // Sleep.
-        sleepMode2(duration_sec, 0);
+        sleepMode2(duration_sec, SLEEP_INTERRUPT_PORT1);
 
         // Restore I/O registers
         P0 = _P0, P1 = _P1, P2 = _P2;
