@@ -33,6 +33,7 @@ extern uint8 DATA radioLinkTxCurrentPacketTries;
 #define comServices() do { boardService(); radioComTxService(); usbComService(); } while (0)
 
 BIT writesAreBlocking = 0;
+BIT accelerometer_connected = 0;
 
 #define MIN_AWAKE_INTERVAL 5000
 
@@ -180,7 +181,6 @@ void cmdTemp() {
 
 void cmdAccelerometer() {
     uint8_t pulse_src = mmaReadRegister(MMA_PULSE_SRC);
-    printf("WHOAMI: %x\r\n", mmaReadRegister(0x0D));
     printf("PULSE_SRC: %x\r\n", pulse_src);
 
 
@@ -280,8 +280,13 @@ void goToSleep(uint16_t duration_sec) __critical {
         P0 = 0;
         P2 &= 0x1F; // USB has the top 3.
 
-        P0DIR = 0b11111000; // Drive all low except the I2C and interrupt pins
-        P0INP = 0x07; // Tristate the I2C and interrupt pins.
+        if (accelerometer_connected) {
+            P0DIR = 0b11111000; // Drive all low except the I2C and interrupt pins
+            P0INP = 0x07; // Tristate the I2C and interrupt pins.
+        } else {
+            P0DIR = 0b11111100;
+            P0INP = 0x03;
+        }
         P1DIR = 0xff;
         P2DIR |= 0x1F; // top 3 are peripheral priority control.
 
@@ -446,15 +451,19 @@ void main()
 
     power_on_epd();
 
-    initMMA8452(
-        2, // SCALE: Sets full-scale range to +/-2, 4, or 8g. Used to calc real g values.
-        2 // dataRate: 0=800Hz, 1=400, 2=200, 3=100, 4=50, 5=12.5, 6=6.25, 7=1.56
-        );
+    accelerometer_connected = (mmaReadRegister(0x0D) == 0x2A);
 
-    // MMA initialization configures active-high interrupts. I2 is connected to pin 1_5.
-    setDigitalInput(PIN_INTERRUPT, HIGH_IMPEDANCE);
-    P1IEN |= (1<<5);
-    PICTL = 0; // Actually this is default: rising edge triggers interrupt.
+    if (accelerometer_connected) {
+        initMMA8452(
+            2, // SCALE: Sets full-scale range to +/-2, 4, or 8g. Used to calc real g values.
+            2 // dataRate: 0=800Hz, 1=400, 2=200, 3=100, 4=50, 5=12.5, 6=6.25, 7=1.56
+            );
+
+        // MMA initialization configures active-high interrupts. I2 is connected to pin 1_5.
+        setDigitalInput(PIN_INTERRUPT, HIGH_IMPEDANCE);
+        P1IEN |= (1<<5);
+        PICTL = 0; // Actually this is default: rising edge triggers interrupt.
+    }
 
     readSeqCommandsFromFlash();
 
